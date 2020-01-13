@@ -181,7 +181,7 @@ collections:
   publications:
     output: true
     permalink: /:collection/:path/
-  wp:
+  portfolio:
     output: true
     permalink: /:collection/:path/
   talks:
@@ -227,10 +227,10 @@ defaults:
       author_profile: true
       share: true
       comments: true
-  # _wp
+  # _portfolio
   - scope:
       path: ""
-      type: wp
+      type: portfolio
     values:
       layout: single
       author_profile: true
