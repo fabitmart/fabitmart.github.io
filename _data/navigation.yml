@@ -6,10 +6,7 @@ main:
   - title: "Working Papers"
     url: /portfolio/
 
-  - title: "Research"
-    url: /publications/
-
-  - title: "Talks"
+  - title: "Seminars"
     url: /talks/    
 
   - title: "Teaching"
