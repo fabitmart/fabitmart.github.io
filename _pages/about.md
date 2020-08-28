@@ -10,6 +10,8 @@ redirect_from:
 
 I am an empirical economist working on policy evaluation, ranging from assessing the impact of environamental awards to estimating the effect of increasing the exit cost from cohabitation on partnering choices. I am passionate about using modern econometric techniques to answer relevant real-world questions. 
 
-I read too many (econ) blogs and not enough books and am always looking for the next research question. I have a strong interest in Epistemology and Philosophy of Economics, on which I wrote my undergraduate (Philosophy) dissertation. In my free time I mostly go to Sydney's Fish Market and buy the freshest fish. I have a [cooking blog](italos.food.blog) on which I occasionally write about my favourite recipes and more in general preach on Italian cuisine.
+I have a strong interest in Epistemology and Philosophy of Economics, on which I wrote my undergraduate (Philosophy) dissertation. 
 
-I am based in Sydney and am currently looking for research positions both inside and outside of the academia, as I recently obtained my PhD.
+In my free time I bake (non-sourdough) long-fermentation bread and go Sydney's Fish Market to source the freshest fish. I enjoy cooking for others and preaching to them about Italian cuisine. 
+
+You can find me in Sydney, where I am an adjunct academic at the University of New South Wales.
