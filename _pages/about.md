@@ -13,5 +13,3 @@ I am an empirical economist working on policy evaluation, ranging from assessing
 I have a strong interest in Epistemology and Philosophy of Economics, on which I wrote my undergraduate (Philosophy) dissertation. 
 
 In my free time I bake (non-sourdough) long-fermentation bread and go Sydney's Fish Market to source the freshest fish. I enjoy cooking for others and preaching to them about Italian cuisine.
-
-You can find me in Sydney, where I am an adjunct academic at the University of New South Wales.
