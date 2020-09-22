@@ -1,4 +1,4 @@
-import delimited "C:\Users\Fabio M\Documents\Research\AUS_edu\AU_edu_data\all_edu_stata.csv", clear
+ import delimited "C:\Users\Fabio M\Documents\Research\AUS_edu\AU_edu_data\all_edu_stata.csv", clear
 
 ********************************************************************************
 ****************** FURTHER TIDY UP PRE ANALYSIS ********************************
@@ -116,13 +116,31 @@ gen ln_stud_contrib = ln(stud_contrib)
 //ssc install center
 //help center
 bysort disc_num (year) : center bachelor, gen(dem_bachelor)
+bysort disc_num (year) : center ln_bachelor, gen(ln_dem_bachelor)
 
-
-*contruct dummy variable =1 after a field gets out of the NP program and 0 otherwise
-gen de_treat = (((regexm(disc_code, "^07") == 1) | (regexm(disc_code, "^06") == 1)) & (year>=2010)) | ///
+*construct dummy variable =1 after a field gets out of the NP program and 0 otherwise
+gen de_treat = (((regexm(disc_code, "^07") == 1) | (regexm(disc_code, "^0603") == 1)) & (year>=2010)) | ///
 			   ((regexm(disc_code, "^01") == 1) & (year>=2013))
 
-			   
+*generate variables to identify discipline part of the first and second national 
+* priority programme
+gen np1 = ((regexm(disc_code, "^07") == 1) | (regexm(disc_code, "^0603") == 1))
+gen np2 = regexm(disc_code, "^01") == 1 
+
+*time-to-event for each NP programme and the two combined  
+gen event_time1 = year - 2009 if np1 == 1
+gen event_time2 = year - 2012 if np2 == 1
+gen event_time = event_time1 if np1 == 1
+replace event_time = event_time2 if np2 == 1
+
+*label variables (for graphs)
+label var bachelor "Commencing students"
+label var ln_bachelor "ln(Commencing students)"
+label var ln_dem_bachelor "ln(Commencing students)"
+label var t "Time trend"
+label var de_treat "Contribution increase"
+label var event_time "Event time"
+	   
 cd "C:\Users\Fabio M\Documents\Research\AUS_edu\AU_edu_data"
 save edu_stata_clean, replace
 
@@ -134,27 +152,23 @@ save edu_stata_clean, replace
 cd "C:\Users\Fabio M\Documents\Research\AUS_edu\AU_edu_data"
 use edu_stata_clean, clear
 
-/* alternative way to construct same variable			   
-gen de_treat2 = 0
-	replace de_treat2=1 if (regexm(disc_code, "^07") == 1) & (year>=2010)
-	replace de_treat2=1 if (regexm(disc_code, "^06") == 1) & (year>=2010)
-	replace de_treat2=1 if (regexm(disc_code, "^01") == 1) & (year>=2013)
-*/
-
 *keep only treated fields and check for presence of kink in enorolment growth
 keep if treat_group==1 //keeps only evertreated fields
 
 *check whether bachelor has values <1, undefined in logs
 sum ln_bachelor bachelor
 
-*export csv file and plot in ggplot!
+*export csv file
 export delimited "C:\Users\Fabio M\Documents\Research\AUS_edu\AU_edu_data\just_NP.csv"
 
 *FINAL PLOTS - COMBINED IN LATEX************************************************
 cd "C:\Users\Fabio M\Documents\Research\AUS_edu"
-colorpalette9 plottig, hue nograph   //    "231 107 243" "255 103 164" "0 188 216" "107 177 0" "229 135 0" "253 97 209"
+
+*get nice palette
+colorpalette9 plottig, hue nograph   //     "255 103 164" "0 188 216" "107 177 0" "229 135 0" "253 97 209"
 return list 
 
+*plot bachelor over time, national priority #1
 list disc_code disc if (regexm(disc_code, "^06") == 1 | regexm(disc_code, "^07") == 1) & year == 2006
 tw  ( line bachelor year if disc_code == "070199", lcolor(black) ) ///
 	( line bachelor year if disc_code == "070300", lcolor("97 156 255") ) ///
@@ -169,9 +183,10 @@ tw  ( line bachelor year if disc_code == "070199", lcolor(black) ) ///
 	legend(order(1 "Teacher Education" 2 "Curriculum Education Studies" 3 "Other Education" 4 "Nursing"))
 graph export "np09.pdf", replace	
 graph save np09s, replace
-	
+
+*plot bachelor over time, national priority #2	
 list disc_code disc if regexm(disc_code, "^01") == 1 & year == 2006
-tw  ( line bachelor year if disc_code == "010199", lcolor(black) ) ///
+tw  ( line bachelor year if disc_code == "010199", lcolor("231 107 243") ) ///
 	( line bachelor year if disc_code == "010300", lcolor("248 118 109") ) ///
 	( line bachelor year if disc_code == "010799", lcolor("0 176 246") ) ///
 	( line bachelor year if disc_code == "010999", lcolor("0 186 56") ) ///
@@ -187,28 +202,51 @@ graph export "np12.pdf", replace
 graph save np12s, replace
 ********************************************************************************
 
-*ESTIMATION*********************************************************************
+********************************************************************************
+*EVENT STUDY ANALYSIS
 cd "C:\Users\Fabio M\Documents\Research\AUS_edu\AU_edu_data"
 use edu_stata_clean, clear
-*keep only treated fields and check for presence of kink in enorolment growth
-keep if treat_group==1 //keeps only evertreated fields
 
-label var bachelor "Commencing students"
-label var ln_bachelor "ln(Commencing students)"
-label var t "Time trend"
-label var de_treat "Contribution increase"
-*check for kinks
-//reg ln_bachelor c.t##i.de_treat, cluster(disc_num)
+*restrict sample
+keep if (np1 == 1) | (np2 == 1)
+keep if event_time>=-3 & event_time<=5
 
+xtset disc_num event_time
+
+/*
+*quick plot
+xtline ln_dem_bachelor if  (np1 == 1) | (np2 == 1), ///
+	xline(0) overlay scheme(fabcolor)  ///
+	ytitle("Centered ln(Commencing students)", height(+5)) ///
+	xtitle("Event time", height(+5)) ///	
+	xscale(range(-3 5)) xlabel(-3(1)5) //legend(off)
+*/
+
+*proper plot (same colour-coding used before)
+tw  ( line ln_dem_bachelor event_time if disc_code == "070199", lcolor(black) ) ///
+	( line ln_dem_bachelor event_time if disc_code == "070300", lcolor("97 156 255") ) ///
+	( line ln_dem_bachelor event_time if disc_code == "079900", lcolor("201 152 0") ) ///
+	( line ln_dem_bachelor event_time if disc_code == "060399", lcolor("185 56 255") ) ///
+    ( line ln_dem_bachelor event_time if disc_code == "010199", lcolor("231 107 243") ) ///
+	( line ln_dem_bachelor event_time if disc_code == "010300", lcolor("248 118 109") ) ///
+	( line ln_dem_bachelor event_time if disc_code == "010799", lcolor("0 176 246") ) ///
+	( line ln_dem_bachelor event_time if disc_code == "010999", lcolor("0 186 56") ) ///
+	( line ln_dem_bachelor event_time if disc_code == "019900", lcolor("163 165 0") ) ///	
+	,scheme(fabcolor) ///
+	xline(0) ///
+	ytitle("Centered ln(Commencing students)", height(+5)) ///
+	xtitle("Event time", height(+5)) ///	
+	xscale(range(-3 5)) xlabel(-3(1)5)	legend(off)
+graph export "C:\Users\Fabio M\Documents\Research\AUS_edu\au_event.pdf", replace	
+
+
+*regressions and latex table
 eststo clear
-eststo: xtreg ln_bachelor c.t##i.de_treat, fe robust
-esttab using "C:\Users\Fabio M\Documents\Research\AUS_edu\edu_reg.tex", label nobaselevel booktabs replace nonumbers
-
-
-
-
-
-
-
+eststo: xtreg ln_bachelor c.event_time##i.de_treat, fe robust
+eststo: xtreg ln_bachelor event_time c.event_time#i.de_treat, fe robust
+eststo: xtreg ln_bachelor c.event_time##i.de_treat if disc!="othereducation", fe robust
+eststo: xtreg ln_bachelor event_time c.event_time#i.de_treat if disc!="othereducation", fe robust
+esttab using "C:\Users\Fabio M\Documents\Research\AUS_edu\edu_reg1.tex", ///
+	label nobaselevel booktabs replace numbers nomtitles
 
 
